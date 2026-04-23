@@ -88,7 +88,7 @@ export function AddTodo() {
               value={dueInput}
               onChange={(e) => setDueInput(e.target.value)}
               onBlur={collapseIfEmpty}
-              className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500"
+              className="w-full max-w-full min-w-0 box-border rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500"
             />
           </label>
         </div>

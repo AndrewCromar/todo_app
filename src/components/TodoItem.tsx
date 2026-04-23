@@ -87,13 +87,31 @@ export function TodoItem({
       }`}
     >
       <div className="flex items-center gap-3 py-2 px-3">
-        <input
-          type="checkbox"
-          checked={todo.completed}
-          onChange={() => toggleTodo(todo.id)}
-          onClick={(e) => e.stopPropagation()}
-          className="h-4 w-4 cursor-pointer accent-black dark:accent-white flex-shrink-0"
-        />
+        <label className="relative flex-shrink-0 cursor-pointer inline-flex">
+          <input
+            type="checkbox"
+            checked={todo.completed}
+            onChange={() => toggleTodo(todo.id)}
+            onClick={(e) => e.stopPropagation()}
+            className="peer sr-only"
+          />
+          <span
+            aria-hidden="true"
+            className="h-4 w-4 rounded-sm border border-neutral-400 dark:border-neutral-500 bg-white dark:bg-neutral-950 flex items-center justify-center peer-checked:bg-black peer-checked:border-black dark:peer-checked:bg-white dark:peer-checked:border-white peer-checked:[&>svg]:opacity-100 transition-colors"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-3 w-3 text-white dark:text-black opacity-0 transition-opacity"
+            >
+              <polyline points="3 8 7 12 13 4" />
+            </svg>
+          </span>
+        </label>
 
         {expanded ? (
           <input
@@ -166,7 +184,7 @@ export function TodoItem({
               type="datetime-local"
               value={dueInput}
               onChange={(e) => commitDue(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500"
+              className="w-full max-w-full min-w-0 box-border rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500"
             />
           </label>
 

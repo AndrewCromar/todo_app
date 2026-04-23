@@ -36,7 +36,7 @@ export function TodoArea() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortMode)}
-            className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500"
+            className="font-sans rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500"
           >
             {(Object.keys(SORT_LABELS) as SortMode[]).map((mode) => (
               <option key={mode} value={mode}>
