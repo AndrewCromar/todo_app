@@ -6,7 +6,11 @@ import { TodoItem } from "./TodoItem";
 
 export function TodoList() {
   const todos = useLiveQuery(() =>
-    db.todos.orderBy("created_at").reverse().toArray()
+    db.todos
+      .orderBy("created_at")
+      .reverse()
+      .filter((t) => t.sync_status !== "deleting")
+      .toArray(),
   );
 
   if (todos === undefined) {

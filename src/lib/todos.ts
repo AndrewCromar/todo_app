@@ -12,6 +12,7 @@ export async function createTodo(title: string): Promise<Todo> {
     due_at: null,
     created_at: now,
     updated_at: now,
+    sync_status: "pending",
   };
   await db.todos.add(todo);
   return todo;
@@ -23,6 +24,7 @@ export async function toggleTodo(id: string): Promise<void> {
   await db.todos.update(id, {
     completed: !existing.completed,
     updated_at: Date.now(),
+    sync_status: "pending",
   });
 }
 
@@ -32,9 +34,13 @@ export async function renameTodo(id: string, title: string): Promise<void> {
   await db.todos.update(id, {
     title: trimmed,
     updated_at: Date.now(),
+    sync_status: "pending",
   });
 }
 
 export async function deleteTodo(id: string): Promise<void> {
-  await db.todos.delete(id);
+  await db.todos.update(id, {
+    sync_status: "deleting",
+    updated_at: Date.now(),
+  });
 }
