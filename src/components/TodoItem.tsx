@@ -137,13 +137,22 @@ export function TodoItem({
           <button
             type="button"
             onClick={onExpand}
-            className={`flex-1 min-w-0 text-left text-sm cursor-text truncate ${
-              todo.completed
-                ? "line-through text-neutral-400 dark:text-neutral-500"
-                : "text-neutral-900 dark:text-neutral-100"
-            }`}
+            className="flex-1 min-w-0 text-left cursor-text flex flex-col"
           >
-            {todo.title}
+            <span
+              className={`truncate text-sm ${
+                todo.completed
+                  ? "line-through text-neutral-400 dark:text-neutral-500"
+                  : "text-neutral-900 dark:text-neutral-100"
+              }`}
+            >
+              {todo.title}
+            </span>
+            {todo.description && (
+              <span className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+                {todo.description}
+              </span>
+            )}
           </button>
         )}
 
