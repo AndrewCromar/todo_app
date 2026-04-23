@@ -30,6 +30,14 @@ export const todos = pgTable(
 export type ServerTodo = typeof todos.$inferSelect;
 export type NewServerTodo = typeof todos.$inferInsert;
 
+export const userPrefs = pgTable("user_prefs", {
+  user_id: integer("user_id").primaryKey(),
+  sort_mode: text("sort_mode").notNull().default("created"),
+  updated_at: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const pushSubscriptions = pgTable(
   "push_subscriptions",
   {

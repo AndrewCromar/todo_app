@@ -1,4 +1,10 @@
 import { db, type Todo } from "./db";
+import {
+  applyRemotePrefs,
+  getLocalPrefsState,
+  markPrefsSynced,
+} from "./prefs";
+import type { SortMode } from "@/components/TodoArea";
 
 type ServerTodo = {
   id: string;
@@ -105,6 +111,43 @@ async function pullAll(): Promise<void> {
   });
 }
 
+async function syncPrefs(): Promise<void> {
+  const local = await getLocalPrefsState();
+
+  try {
+    const res = await fetch("/api/prefs", { cache: "no-store" });
+    if (!res.ok) return;
+    const data = (await res.json()) as {
+      prefs: { sort_mode: string; updated_at: string } | null;
+    };
+
+    if (data.prefs) {
+      const remoteTs = new Date(data.prefs.updated_at).getTime();
+      if (remoteTs > local.updated_at) {
+        await applyRemotePrefs({
+          sort_mode: data.prefs.sort_mode as SortMode,
+          updated_at: remoteTs,
+        });
+        return;
+      }
+    }
+
+    if (local.updated_at > local.synced_at) {
+      const postRes = await fetch("/api/prefs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sort_mode: local.sort_mode,
+          updated_at: new Date(local.updated_at).toISOString(),
+        }),
+      });
+      if (postRes.ok) await markPrefsSynced(local.updated_at);
+    }
+  } catch (err) {
+    console.warn("prefs sync failed:", err);
+  }
+}
+
 let syncing = false;
 
 export async function sync(): Promise<void> {
@@ -122,11 +165,17 @@ export async function sync(): Promise<void> {
     const stored = await db.meta.get("user_id");
     if (stored?.value !== data.user.id) {
       await db.todos.clear();
+      await Promise.all([
+        db.meta.delete("sort_mode"),
+        db.meta.delete("sort_mode_updated_at"),
+        db.meta.delete("sort_mode_synced_at"),
+      ]);
       await db.meta.put({ key: "user_id", value: data.user.id });
     }
 
     await pushDirty();
     await pullAll();
+    await syncPrefs();
   } finally {
     syncing = false;
   }

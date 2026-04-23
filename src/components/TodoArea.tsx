@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
 import { AddTodo } from "./AddTodo";
 import { EnableNotifications } from "./EnableNotifications";
 import { ThemeToggle } from "./ThemeToggle";
 import { TodoList } from "./TodoList";
+import { db } from "@/lib/db";
+import { setSortMode } from "@/lib/prefs";
 import { sync } from "@/lib/sync";
 
 export type SortMode = "created" | "due" | "alpha";
@@ -15,10 +18,24 @@ const SORT_LABELS: Record<SortMode, string> = {
   alpha: "A–Z",
 };
 
+const VALID_SORTS: readonly SortMode[] = ["created", "due", "alpha"];
+
 export function TodoArea() {
-  const [sort, setSort] = useState<SortMode>("created");
+  const sort = useLiveQuery(async () => {
+    const row = await db.meta.get("sort_mode");
+    return typeof row?.value === "string" &&
+      (VALID_SORTS as readonly string[]).includes(row.value)
+      ? (row.value as SortMode)
+      : "created";
+  }, [], "created" as SortMode);
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  async function handleSortChange(mode: SortMode) {
+    await setSortMode(mode);
+    void sync();
+  }
 
   async function handleRefresh() {
     if (refreshing) return;
@@ -41,7 +58,7 @@ export function TodoArea() {
             <span>Sort</span>
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value as SortMode)}
+              onChange={(e) => handleSortChange(e.target.value as SortMode)}
               className="font-sans rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500"
             >
               {(Object.keys(SORT_LABELS) as SortMode[]).map((mode) => (
