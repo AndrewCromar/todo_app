@@ -44,7 +44,26 @@ export async function renameTag(id: string, name: string): Promise<void> {
   if (existing && existing.id !== id) {
     throw new Error(`A tag named "${trimmed}" already exists`);
   }
-  await db.tags.update(id, { name: trimmed, sync_status: "pending" });
+
+  let res: Response;
+  try {
+    res = await fetch("/api/tags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, name: trimmed }),
+    });
+  } catch {
+    throw new Error("Rename needs an internet connection");
+  }
+
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+    throw new Error(data?.error ?? `Rename failed (${res.status})`);
+  }
+
+  await db.tags.update(id, { name: trimmed, sync_status: "synced" });
 }
 
 export async function countTodosWithTag(tagId: string): Promise<number> {
