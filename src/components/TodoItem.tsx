@@ -197,18 +197,12 @@ export function TodoItem({
 
         {!expanded && (
           <div className="flex items-center gap-2 flex-shrink-0">
-            {tags.slice(0, 2).map((tag) => (
+            {tags.length > 0 && (
               <span
-                key={tag.id}
-                className="rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-[10px] px-2 py-0.5"
-              >
-                {tag.name}
-              </span>
-            ))}
-            {tags.length > 2 && (
-              <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                +{tags.length - 2}
-              </span>
+                aria-label={`Tagged: ${tags.map((t) => t.name).join(", ")}`}
+                title={tags.map((t) => t.name).join(", ")}
+                className="h-1.5 w-1.5 rounded-full bg-neutral-500 dark:bg-neutral-400"
+              />
             )}
             {rule && (
               <span

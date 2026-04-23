@@ -22,6 +22,7 @@
 html,
 body {
   overscroll-behavior: contain;
+  overflow-x: clip;
 }
 
 body {
