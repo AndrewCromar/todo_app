@@ -67,3 +67,20 @@ export async function deleteTodo(id: string): Promise<void> {
     updated_at: Date.now(),
   });
 }
+
+export async function clearCompletedTodos(): Promise<number> {
+  const now = Date.now();
+  const completed = await db.todos
+    .filter((t) => t.completed && t.sync_status !== "deleting")
+    .toArray();
+  if (completed.length === 0) return 0;
+  await db.transaction("rw", db.todos, async () => {
+    for (const t of completed) {
+      await db.todos.update(t.id, {
+        sync_status: "deleting",
+        updated_at: now,
+      });
+    }
+  });
+  return completed.length;
+}
