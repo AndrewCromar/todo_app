@@ -28,7 +28,7 @@ export function TagFilter({
   if (tags.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1 overflow-x-auto pb-1">
+    <div className="flex items-center gap-1 overflow-x-auto flex-nowrap w-full min-w-0 pb-1">
       <button
         type="button"
         onClick={onClear}

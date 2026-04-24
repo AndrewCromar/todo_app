@@ -92,8 +92,8 @@ export function TodoArea() {
 
   return (
     <>
-      <div className="sticky top-0 z-30 bg-background border-b border-neutral-200 dark:border-neutral-800 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-md mx-auto px-4 sm:px-8 flex flex-col gap-3 pt-4 pb-3 min-w-0">
+      <div className="sticky top-0 z-30 bg-background border-b border-neutral-200 dark:border-neutral-800 pt-[env(safe-area-inset-top)] w-full">
+        <div className="w-full max-w-md mx-auto px-4 sm:px-8 flex flex-col gap-3 pt-4 pb-3 min-w-0">
           <div className="flex items-center justify-between gap-2 min-w-0">
             <h1 className="text-2xl font-semibold truncate min-w-0">acta</h1>
             <button
@@ -181,7 +181,7 @@ export function TodoArea() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 sm:px-8 pt-3 min-w-0">
+      <div className="w-full max-w-md mx-auto px-4 sm:px-8 pt-3 min-w-0">
         <TodoList
           sort={sort}
           activeTagIds={activeTagIds}
