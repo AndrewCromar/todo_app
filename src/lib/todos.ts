@@ -7,6 +7,7 @@ export async function createTodo(
   extra: {
     description?: string;
     due_at?: number | null;
+    due_has_time?: boolean;
     recurrence_rule?: string | null;
   } = {},
 ): Promise<Todo> {
@@ -21,6 +22,7 @@ export async function createTodo(
     description: extra.description?.trim() ?? "",
     completed: false,
     due_at: extra.due_at ?? null,
+    due_has_time: extra.due_has_time ?? true,
     recurrence_rule: extra.recurrence_rule ?? null,
     recurrence_series_id: extra.recurrence_rule ? id : null,
     created_at: now,
@@ -58,19 +60,39 @@ export async function toggleTodo(id: string): Promise<void> {
     description: existing.description,
     completed: false,
     due_at: nextDate.getTime(),
+    due_has_time: existing.due_has_time,
     recurrence_rule: existing.recurrence_rule,
     recurrence_series_id: existing.recurrence_series_id ?? existing.id,
     created_at: nowTs,
     updated_at: nowTs,
     sync_status: "pending",
   };
-  await db.todos.add(nextTodo);
+
+  const existingLinks = await db.todo_tags
+    .where("todo_id")
+    .equals(existing.id)
+    .toArray();
+  const tagIdsToCopy = existingLinks
+    .filter((l) => l.sync_status !== "deleting")
+    .map((l) => l.tag_id);
+
+  await db.transaction("rw", db.todos, db.todo_tags, async () => {
+    await db.todos.add(nextTodo);
+    for (const tagId of tagIdsToCopy) {
+      await db.todo_tags.put({
+        todo_id: nextId,
+        tag_id: tagId,
+        sync_status: "pending",
+      });
+    }
+  });
 }
 
 export type TodoPatch = {
   title?: string;
   description?: string;
   due_at?: number | null;
+  due_has_time?: boolean;
   recurrence_rule?: string | null;
 };
 
@@ -89,6 +111,9 @@ export async function updateTodo(id: string, patch: TodoPatch): Promise<void> {
   }
   if (patch.due_at !== undefined) {
     update.due_at = patch.due_at;
+  }
+  if (patch.due_has_time !== undefined) {
+    update.due_has_time = patch.due_has_time;
   }
   if (patch.recurrence_rule !== undefined) {
     update.recurrence_rule = patch.recurrence_rule;

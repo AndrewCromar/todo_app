@@ -42,6 +42,7 @@ async function run(request: Request): Promise<Response> {
     .where(
       and(
         eq(todos.completed, false),
+        eq(todos.due_has_time, true),
         isNotNull(todos.due_at),
         isNull(todos.notified_at),
         lte(todos.due_at, cutoff),

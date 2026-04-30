@@ -19,6 +19,7 @@ export const todos = pgTable(
     description: text("description").notNull().default(""),
     completed: boolean("completed").notNull().default(false),
     due_at: timestamp("due_at", { withTimezone: true }),
+    due_has_time: boolean("due_has_time").notNull().default(true),
     notified_at: timestamp("notified_at", { withTimezone: true }),
     recurrence_rule: text("recurrence_rule"),
     recurrence_series_id: uuid("recurrence_series_id"),

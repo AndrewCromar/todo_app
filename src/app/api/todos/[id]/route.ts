@@ -24,6 +24,7 @@ type PatchBody = {
   description?: string;
   completed?: boolean;
   due_at?: string | null;
+  due_has_time?: boolean;
   updated_at?: string;
 };
 
@@ -67,6 +68,9 @@ export async function PATCH(
     if ((newDue?.getTime() ?? null) !== (existingDue?.getTime() ?? null)) {
       set.notified_at = null;
     }
+  }
+  if (typeof body.due_has_time === "boolean") {
+    set.due_has_time = body.due_has_time;
   }
 
   const [saved] = await db

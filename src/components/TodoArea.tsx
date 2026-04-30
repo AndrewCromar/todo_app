@@ -12,13 +12,19 @@ import { db } from "@/lib/db";
 import { setSortMode } from "@/lib/prefs";
 import { sync } from "@/lib/sync";
 
-export type SortMode = "created" | "due" | "due_grouped" | "alpha";
+export type SortMode =
+  | "created"
+  | "due"
+  | "due_grouped"
+  | "alpha"
+  | "calendar";
 
 const SORT_LABELS: Record<SortMode, string> = {
   created: "Created",
   due: "Due date",
   due_grouped: "Due by day",
   alpha: "A–Z",
+  calendar: "Calendar",
 };
 
 const VALID_SORTS: readonly SortMode[] = [
@@ -26,11 +32,12 @@ const VALID_SORTS: readonly SortMode[] = [
   "due",
   "due_grouped",
   "alpha",
+  "calendar",
 ];
 
 type ModalState =
   | { kind: "none" }
-  | { kind: "create" }
+  | { kind: "create"; dueAt?: number }
   | { kind: "edit"; todoId: string };
 
 export function TodoArea() {
@@ -95,7 +102,7 @@ export function TodoArea() {
       <div className="sticky top-0 z-30 bg-background border-b border-neutral-200 dark:border-neutral-800 pt-[env(safe-area-inset-top)] w-full">
         <div className="w-full max-w-md sm:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-8 flex flex-col gap-3 pt-4 pb-3 min-w-0">
           <div className="flex items-center justify-between gap-2 min-w-0">
-            <h1 className="text-2xl font-semibold truncate min-w-0">tasks</h1>
+            <h1 className="text-2xl font-semibold truncate min-w-0">Tasks</h1>
             <button
               type="button"
               onClick={() => setModalState({ kind: "create" })}
@@ -186,11 +193,17 @@ export function TodoArea() {
           sort={sort}
           activeTagIds={activeTagIds}
           onOpenTodo={(id) => setModalState({ kind: "edit", todoId: id })}
+          onCreateAt={(dueAt) => setModalState({ kind: "create", dueAt })}
         />
       </div>
 
       {modalState.kind === "create" && (
-        <TodoModal mode="create" open onClose={closeModal} />
+        <TodoModal
+          mode="create"
+          open
+          onClose={closeModal}
+          initialDueAt={modalState.dueAt}
+        />
       )}
       {modalState.kind === "edit" && editingTodo && (
         <TodoModal

@@ -14,11 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "tasks",
+  title: "Tasks",
   description: "Personal todo app with reminders",
   appleWebApp: {
     capable: true,
-    title: "tasks",
+    title: "Tasks",
     statusBarStyle: "black-translucent",
   },
 };

@@ -5,6 +5,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Todo, type TodoTag } from "@/lib/db";
 import { buildLinksByTodo, matchesTagFilter } from "@/lib/tags";
 import { clearCompletedTodos } from "@/lib/todos";
+import { Calendar } from "./Calendar";
 import { TodoItem } from "./TodoItem";
 import type { SortMode } from "./TodoArea";
 
@@ -102,10 +103,12 @@ export function TodoList({
   sort,
   activeTagIds,
   onOpenTodo,
+  onCreateAt,
 }: {
   sort: SortMode;
   activeTagIds: Set<string>;
   onOpenTodo: (id: string) => void;
+  onCreateAt: (dueAt: number) => void;
 }) {
   const [showCompleted, setShowCompleted] = useState(false);
   const [completedVisible, setCompletedVisible] = useState(COMPLETED_PAGE_SIZE);
@@ -131,6 +134,21 @@ export function TodoList({
     );
   }
 
+  const linksByTodo = buildLinksByTodo(todoTagsLinks);
+  const activeTagIdsArr = Array.from(activeTagIds);
+  const filterByTag = (t: Todo) =>
+    matchesTagFilter(linksByTodo, t.id, activeTagIdsArr);
+
+  if (sort === "calendar") {
+    return (
+      <Calendar
+        todos={todos.filter(filterByTag)}
+        onOpenTodo={onOpenTodo}
+        onCreateAt={onCreateAt}
+      />
+    );
+  }
+
   if (todos.length === 0) {
     return (
       <p className="text-sm text-neutral-400 text-center py-8">
@@ -138,11 +156,6 @@ export function TodoList({
       </p>
     );
   }
-
-  const linksByTodo = buildLinksByTodo(todoTagsLinks);
-  const activeTagIdsArr = Array.from(activeTagIds);
-  const filterByTag = (t: Todo) =>
-    matchesTagFilter(linksByTodo, t.id, activeTagIdsArr);
 
   const active = sortActive(
     todos.filter((t) => !t.completed && filterByTag(t)),

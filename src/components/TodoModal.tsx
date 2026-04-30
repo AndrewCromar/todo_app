@@ -23,15 +23,38 @@ type Props = {
   open: boolean;
   onClose: () => void;
 } & (
-  | { mode: "create"; todo?: undefined }
-  | { mode: "edit"; todo: Todo }
+  | { mode: "create"; todo?: undefined; initialDueAt?: number }
+  | { mode: "edit"; todo: Todo; initialDueAt?: undefined }
 );
 
-function toLocalInputValue(ms: number | null): string {
+function toDateInput(ms: number | null): string {
   if (ms === null) return "";
   const d = new Date(ms);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function toTimeInput(ms: number | null): string {
+  if (ms === null) return "";
+  const d = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function combineDateAndTime(
+  dateStr: string,
+  timeStr: string,
+): { ms: number | null; hasTime: boolean } {
+  if (!dateStr) return { ms: null, hasTime: true };
+  const [y, m, d] = dateStr.split("-").map(Number);
+  if (timeStr) {
+    const [hh, mm] = timeStr.split(":").map(Number);
+    return { ms: new Date(y, m - 1, d, hh, mm).getTime(), hasTime: true };
+  }
+  return {
+    ms: new Date(y, m - 1, d, 23, 59, 59, 999).getTime(),
+    hasTime: false,
+  };
 }
 
 function toUntilInput(ms: number | null): string {
@@ -44,10 +67,12 @@ function toUntilInput(ms: number | null): string {
 export function TodoModal(props: Props) {
   const { open, onClose, mode } = props;
   const todo = mode === "edit" ? props.todo : undefined;
+  const initialDueAt = mode === "create" ? props.initialDueAt : undefined;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [dueInput, setDueInput] = useState("");
+  const [dueDateInput, setDueDateInput] = useState("");
+  const [dueTimeInput, setDueTimeInput] = useState("");
   const [freq, setFreq] = useState<RecurrenceFreq | "">("");
   const [untilInput, setUntilInput] = useState("");
   const [draftTags, setDraftTags] = useState<string[]>([]);
@@ -67,20 +92,26 @@ export function TodoModal(props: Props) {
     if (mode === "edit" && todo) {
       setTitle(todo.title);
       setDescription(todo.description);
-      setDueInput(toLocalInputValue(todo.due_at));
+      setDueDateInput(toDateInput(todo.due_at));
+      setDueTimeInput(
+        todo.due_at !== null && todo.due_has_time
+          ? toTimeInput(todo.due_at)
+          : "",
+      );
       const rule = parseRule(todo.recurrence_rule);
       setFreq(rule?.freq ?? "");
       setUntilInput(toUntilInput(rule?.until ?? null));
     } else {
       setTitle("");
       setDescription("");
-      setDueInput("");
+      setDueDateInput(initialDueAt !== undefined ? toDateInput(initialDueAt) : "");
+      setDueTimeInput("");
       setFreq("");
       setUntilInput("");
       setDraftTags([]);
     }
     setIgnoreParse(false);
-  }, [open, mode, todo]);
+  }, [open, mode, todo, initialDueAt]);
 
   useEffect(() => {
     if (!open) return;
@@ -92,15 +123,16 @@ export function TodoModal(props: Props) {
     () => (mode === "create" && !ignoreParse ? parseDate(title) : null),
     [mode, title, ignoreParse],
   );
-  const showParseChip = parse !== null && dueInput === "";
+  const showParseChip = parse !== null && dueDateInput === "";
 
   async function handleSave() {
     if (saving) return;
 
-    const manualDue = dueInput ? new Date(dueInput).getTime() : null;
-    const useParse = parse && manualDue === null && mode === "create";
+    const manual = combineDateAndTime(dueDateInput, dueTimeInput);
+    const useParse = parse && manual.ms === null && mode === "create";
     const finalTitle = (useParse ? parse!.strippedTitle : title).trim();
-    const finalDue = useParse ? parse!.date.getTime() : manualDue;
+    const finalDue = useParse ? parse!.date.getTime() : manual.ms;
+    const finalHasTime = useParse ? parse!.hasTime : manual.hasTime;
     if (!finalTitle) return;
 
     const rule: RecurrenceRule | null = freq
@@ -117,6 +149,7 @@ export function TodoModal(props: Props) {
         const created = await createTodo(finalTitle, {
           description: description.trim(),
           due_at: finalDue,
+          due_has_time: finalHasTime,
           recurrence_rule: ruleJson,
         });
         for (const name of draftTags) {
@@ -127,6 +160,7 @@ export function TodoModal(props: Props) {
           title: finalTitle,
           description: description,
           due_at: finalDue,
+          due_has_time: finalHasTime,
           recurrence_rule: ruleJson,
         });
       }
@@ -228,7 +262,7 @@ export function TodoModal(props: Props) {
               <span className="rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-2 py-0.5 truncate min-w-0">
                 →{" "}
                 <span className="font-medium">{parse.strippedTitle}</span>{" "}
-                · due {formatShort(parse.date)}
+                · due {formatShort(parse.date, parse.hasTime)}
               </span>
               <button
                 type="button"
@@ -255,19 +289,36 @@ export function TodoModal(props: Props) {
           />
         </label>
 
-        <label className="flex flex-col gap-1 min-w-0">
+        <div className="flex flex-col gap-1 min-w-0">
           <span className="text-xs text-neutral-500 dark:text-neutral-400">
             Due
           </span>
-          <div className="max-w-[20rem] min-w-0">
+          <div className="flex gap-2 max-w-[20rem] min-w-0">
             <input
-              type="datetime-local"
-              value={dueInput}
-              onChange={(e) => setDueInput(e.target.value)}
-              className="w-full max-w-full min-w-0 box-border rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500"
+              type="date"
+              aria-label="Due date"
+              value={dueDateInput}
+              onChange={(e) => {
+                setDueDateInput(e.target.value);
+                if (!e.target.value) setDueTimeInput("");
+              }}
+              className="flex-1 min-w-0 box-border rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500"
+            />
+            <input
+              type="time"
+              aria-label="Due time (optional)"
+              value={dueTimeInput}
+              onChange={(e) => setDueTimeInput(e.target.value)}
+              disabled={!dueDateInput}
+              className="flex-1 min-w-0 box-border rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-base outline-none focus:border-neutral-500 disabled:opacity-50"
             />
           </div>
-        </label>
+          {dueDateInput && !dueTimeInput && (
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              No time set — task is due any time on this day.
+            </span>
+          )}
+        </div>
 
         <div className="flex flex-col gap-2 min-w-0">
           <span className="text-xs text-neutral-500 dark:text-neutral-400">

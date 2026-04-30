@@ -102,7 +102,7 @@ async function run(request: Request): Promise<Response> {
     const body = buildBody(today.length, overdue.length, sampleTitles);
 
     const payload = JSON.stringify({
-      title: "acta · today",
+      title: "Tasks · today",
       body,
       url: "/",
     });

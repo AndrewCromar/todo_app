@@ -8,6 +8,7 @@ export type Todo = {
   description: string;
   completed: boolean;
   due_at: number | null;
+  due_has_time: boolean;
   recurrence_rule: string | null;
   recurrence_series_id: string | null;
   created_at: number;
@@ -96,5 +97,21 @@ db.version(5).stores({
   tags: "id, name, sync_status",
   todo_tags: "[todo_id+tag_id], todo_id, tag_id, sync_status",
 });
+
+db.version(6)
+  .stores({
+    todos: "id, completed, due_at, created_at, updated_at, sync_status",
+    meta: "key",
+    tags: "id, name, sync_status",
+    todo_tags: "[todo_id+tag_id], todo_id, tag_id, sync_status",
+  })
+  .upgrade((tx) => {
+    return tx
+      .table("todos")
+      .toCollection()
+      .modify((todo: Partial<Todo>) => {
+        if (todo.due_has_time === undefined) todo.due_has_time = true;
+      });
+  });
 
 export { db };

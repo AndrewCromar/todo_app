@@ -13,6 +13,7 @@ type ServerTodo = {
   description: string | null;
   completed: boolean;
   due_at: string | null;
+  due_has_time: boolean | null;
   recurrence_rule: string | null;
   recurrence_series_id: string | null;
   created_at: string;
@@ -26,6 +27,7 @@ function serverToLocal(s: ServerTodo): Todo {
     description: s.description ?? "",
     completed: s.completed,
     due_at: s.due_at ? new Date(s.due_at).getTime() : null,
+    due_has_time: s.due_has_time ?? true,
     recurrence_rule: s.recurrence_rule ?? null,
     recurrence_series_id: s.recurrence_series_id ?? null,
     created_at: new Date(s.created_at).getTime(),
@@ -41,6 +43,7 @@ function localToUpsertBody(t: Todo) {
     description: t.description,
     completed: t.completed,
     due_at: t.due_at ? new Date(t.due_at).toISOString() : null,
+    due_has_time: t.due_has_time,
     recurrence_rule: t.recurrence_rule,
     recurrence_series_id: t.recurrence_series_id,
     created_at: new Date(t.created_at).toISOString(),

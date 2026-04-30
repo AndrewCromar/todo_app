@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "tasks",
-    short_name: "tasks",
+    name: "Tasks",
+    short_name: "Tasks",
     description: "Personal todo app with reminders",
     start_url: "/",
     display: "standalone",

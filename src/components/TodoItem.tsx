@@ -7,15 +7,14 @@ import { getTagsForTodo } from "@/lib/tags";
 import { linkify } from "@/lib/text";
 import type { Tag, Todo } from "@/lib/db";
 
-function formatDueShort(ms: number): string {
+function formatDueShort(ms: number, hasTime: boolean): string {
   const d = new Date(ms);
   const now = new Date();
   const sameYear = d.getFullYear() === now.getFullYear();
   return d.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
+    ...(hasTime ? { hour: "numeric", minute: "2-digit" } : {}),
     ...(sameYear ? {} : { year: "numeric" }),
   });
 }
@@ -136,7 +135,7 @@ export function TodoItem({
                   : "text-neutral-500 dark:text-neutral-400"
               }`}
             >
-              {formatDueShort(todo.due_at)}
+              {formatDueShort(todo.due_at, todo.due_has_time)}
             </span>
           )}
         </div>
